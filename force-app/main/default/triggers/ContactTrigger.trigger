@@ -28,17 +28,17 @@ trigger ContactTrigger on Contact(before insert, after insert, after update) {
 
 	//When a contact is inserted
 	// if DummyJSON_Id__c is less than or equal to 100, call the getDummyJSONUserFromId API
-	if (Trigger.isAfter && Trigger.isInsert)
+	if (Trigger.isAfter && Trigger.isInsert && !System.isFuture()) {
 		for (Contact con : Trigger.new) {
-			String dummyId = con.DummyJSON_Id__c;
-			if (Integer.valueOf(dummyId) <= 100) {
-				DummyJSONCallout.getDummyJSONUserFromId(dummyId);
+			if (Integer.valueOf(con.DummyJSON_Id__c) <= 100) {
+				DummyJSONCallout.getDummyJSONUserFromId(con.DummyJSON_Id__c);
 			}
 		}
+	}
 
 	//When a contact is updated
 	// if DummyJSON_Id__c is greater than 100, call the postCreateDummyJSONUser API
-	if (Trigger.isAfter && Trigger.isUpdate) {
+	if (Trigger.isAfter && Trigger.isUpdate && !System.isFuture()) {
 		for (Contact con : Trigger.new) {
 			if (Integer.valueOf(con.DummyJSON_Id__c) > 100) {
 				DummyJSONCallout.postCreateDummyJSONUser(con.Id);

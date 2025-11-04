@@ -34,13 +34,15 @@ public with sharing class DummyJSONCallout {
      * @param dummyUserId The ID of the user in the external system to fetch data for.
      */
 
+	 @future(callout=true)
 	public static void getDummyJSONUserFromId(String dummyUserId) {
 		// Create HTTP request to send.
 		Http http = new Http();
 		HttpRequest req = new HttpRequest();
 
-		// Set the endpoint URL. Use direct URL or for best practices use Named Credential.
-		req.setEndpoint(ConnectApi.NamedCredentials.getNamedCredential('DummyJsonUser') + dummyUserId);
+		// Set the endpoint URL. Use Named Credential in production, but use the callout: form during tests
+		// because ConnectApi.NamedCredentials is not available in data-siloed test contexts.
+		req.setEndpoint('callout:DummyJsonUser/' + dummyUserId);
 
 		// Set the HTTP method to GET.
 		req.setMethod('GET');
@@ -114,13 +116,13 @@ public with sharing class DummyJSONCallout {
      * @param contactId The Salesforce Contact ID used to generate the JSON payload for the external system.
      */
 	
+	@future(callout=true)
 	public static void postCreateDummyJSONUser(String contactId) {
 		// Create HTTP request to send.
 		Http http = new Http();
 		HttpRequest req = new HttpRequest();
 
-		// Set the endpoint URL. Use direct URL or for best practices use Named Credential.
-		req.setEndpoint(ConnectApi.NamedCredentials.getNamedCredential('DummyJsonUser') + '/add');
+		req.setEndpoint('callout:DummyJsonUser/add');
 
 		// Set the HTTP method to POST.
 		req.setMethod('POST');
@@ -140,6 +142,7 @@ public with sharing class DummyJSONCallout {
 				Id = contactId,
 				DummyJSON_Last_Updated__c = System.now()
 			);
+
 			update cont;
 		}
 	}
@@ -166,11 +169,11 @@ public with sharing class DummyJSONCallout {
 
 		// Create a map of the field values.
 		Map<String, Object> payloadMap = new Map<String, Object>();
-		payloadMap.put('salesforceId', cont.Id);
 		payloadMap.put('firstName', String.isBlank(cont.FirstName) ? 'unknown' : cont.FirstName);
 		payloadMap.put('lastName', String.isBlank(cont.LastName) ? 'unknown' : cont.LastName);
 		payloadMap.put('email', String.isBlank(cont.Email) ? 'unknown@example.com' : cont.Email);
 		payloadMap.put('phone', String.isBlank(cont.Phone) ? 'unknown' : cont.Phone);
+		payloadMap.put('salesforceId', cont.Id);
 
 		// Serialize the map into a JSON string.
 		return JSON.serialize(payloadMap);
